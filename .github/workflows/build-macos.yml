@@ -1,0 +1,66 @@
+# Builds the macOS app on a GitHub-hosted Mac and packs it into a .dmg.
+# Runs by hand (Actions tab -> Run workflow) and for every published release,
+# in which case the .dmg is attached to that release.
+name: Build macOS installer
+
+on:
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: write  # to attach the .dmg to the release
+
+jobs:
+  macos:
+    runs-on: macos-latest  # Apple Silicon (arm64)
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt pyinstaller pillow
+
+      - name: Run tests
+        run: python -m pytest -q
+        env:
+          QT_QPA_PLATFORM: offscreen
+
+      - name: Build app
+        run: python -m PyInstaller --noconfirm --distpath dist --workpath build packaging/cycling_trainer.spec
+
+      - name: Smoke test (app starts and keeps running)
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          "dist/Cycling Trainer.app/Contents/MacOS/Cycling Trainer" &
+          PID=$!
+          sleep 20
+          kill -0 "$PID"
+          kill "$PID"
+          cat "$HOME/Library/Application Support/CyclingTrainer/trainer.log"
+
+      - name: Build dmg
+        run: |
+          VERSION=$(python -c "import trainer; print(trainer.__version__)")
+          DMG="CyclingTrainer-$VERSION-macOS-AppleSilicon.dmg"
+          mkdir dmg
+          cp -R "dist/Cycling Trainer.app" dmg/
+          ln -s /Applications dmg/Applications
+          hdiutil create -volname "Cycling Trainer" -srcfolder dmg -ov -format UDZO "$DMG"
+          shasum -a 256 "$DMG"
+          echo "DMG=$DMG" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-dmg
+          path: ${{ env.DMG }}
+
+      - name: Attach to release
+        if: github.event_name == 'release'
+        run: gh release upload "${{ github.event.release.tag_name }}" "$DMG" --clobber
+        env:
+          GH_TOKEN: ${{ github.token }}

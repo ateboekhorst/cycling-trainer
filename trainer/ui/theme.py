@@ -1,5 +1,9 @@
-"""Colours and the application style sheet."""
+"""Colours, fonts and the application style sheet."""
+import sys
+
 from PySide6.QtGui import QColor
+
+FONT_FAMILY = {"win32": "Segoe UI", "darwin": "Helvetica Neue"}.get(sys.platform, "Sans Serif")
 
 BACKGROUND = "#14171c"
 PANEL = "#1d2128"
@@ -26,7 +30,7 @@ def zone_color(index: int) -> QColor:
 
 
 STYLE = f"""
-QWidget {{ background: {BACKGROUND}; color: {TEXT}; font-family: "Segoe UI"; font-size: 10pt; }}
+QWidget {{ background: {BACKGROUND}; color: {TEXT}; font-family: "{FONT_FAMILY}"; font-size: 10pt; }}
 QFrame#tile {{ background: {PANEL}; border: 1px solid {PANEL_BORDER}; border-radius: 8px; }}
 QLabel {{ background: transparent; }}
 QLabel#tileTitle {{ color: {MUTED}; font-size: 8pt; font-weight: 600; letter-spacing: 1px; }}

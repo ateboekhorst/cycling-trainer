@@ -1,9 +1,14 @@
-"""User settings (%APPDATA%\\CyclingTrainer\\settings.json) and data folders."""
+"""User settings (settings.json in config_dir()) and data folders.
+
+Settings live in %APPDATA%\\CyclingTrainer on Windows and ~/Library/Application Support/CyclingTrainer
+on macOS; rides, workouts and the plan in Documents/CyclingTrainer.
+"""
 from __future__ import annotations
 
 import json
 import logging
 import os
+import sys
 from dataclasses import asdict, dataclass, fields
 from pathlib import Path
 
@@ -15,7 +20,11 @@ APP_NAME = "CyclingTrainer"
 
 
 def config_dir() -> Path:
-    return Path(os.environ.get("APPDATA") or Path.home()) / APP_NAME
+    if sys.platform == "win32":
+        return Path(os.environ.get("APPDATA") or Path.home()) / APP_NAME
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support" / APP_NAME
+    return Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") / APP_NAME
 
 
 def data_dir() -> Path:

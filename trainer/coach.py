@@ -9,6 +9,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from datetime import date, datetime, timedelta
@@ -317,8 +318,9 @@ def request_plan_api(req: CoachRequest, client: anthropic.Anthropic | None = Non
 
 def find_claude_code() -> str | None:
     """Newest Claude Code bundled with the VS Code extension, else `claude` on PATH."""
+    binary = "claude.exe" if sys.platform == "win32" else "claude"
     bundled = glob.glob(str(Path.home() / ".vscode" / "extensions" / "anthropic.claude-code-*" /
-                            "resources" / "native-binary" / "claude.exe"))
+                            "resources" / "native-binary" / binary))
     if bundled:
         def version(path: str) -> tuple[int, ...]:
             match = re.search(r"claude-code-(\d+)\.(\d+)\.(\d+)", path)

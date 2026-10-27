@@ -104,7 +104,7 @@ class WorkoutChart(QWidget):
         p.drawLine(QPointF(cursor_x, plot.top()), QPointF(cursor_x, plot.bottom()))
 
     def _draw_grid(self, p, plot, span, y_max, ftp, x, y) -> None:
-        p.setFont(QFont("Segoe UI", 8))
+        p.setFont(QFont(theme.FONT_FAMILY, 8))
         step = 50 if y_max <= 400 else 100
         for watts in range(step, int(y_max) + 1, step):
             p.setPen(QPen(QColor("#252a33"), 1))
@@ -186,7 +186,7 @@ class WorkoutChart(QWidget):
             self._draw_legend(p, plot)
 
     def _draw_legend(self, p, plot) -> None:
-        p.setFont(QFont("Segoe UI", 8))
+        p.setFont(QFont(theme.FONT_FAMILY, 8))
         left = plot.left() + 10
         for i, (label, color) in enumerate((("Trainer", theme.POWER_LINE), ("Power meter", theme.METER_LINE))):
             top = plot.top() + 6 + i * 16
