@@ -1,0 +1,7 @@
+bleak==3.0.2
+PySide6==6.12.0
+fit-tool==0.9.16
+anthropic==1.16.0
+pydantic==2.14.1
+keyring==25.7.0
+pytest==9.1.1
