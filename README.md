@@ -4,9 +4,17 @@ A simple indoor training app for Windows: structured workouts, ERG mode and live
 
 ## Download
 
-Get the latest installer, `CyclingTrainer-Setup-<version>.exe`, from the [Releases page](https://github.com/ateboekhorst/cycling-trainer/releases/latest). It runs on 64-bit Windows 10 and 11 and doesn't need Python. You need Bluetooth LE (built in, or a USB Bluetooth 4.0+ adapter) and a smart trainer with Bluetooth FTMS.
+Get the latest version from the [Releases page](https://github.com/ateboekhorst/cycling-trainer/releases/latest). Neither version needs Python. You need Bluetooth LE and a smart trainer with Bluetooth FTMS.
 
-The installer isn't code-signed, so Windows SmartScreen shows "Windows protected your PC" the first time. Click **More info → Run anyway**.
+**Windows 10/11 (64-bit):** download `CyclingTrainer-Setup-<version>.exe` and run it. The installer isn't code-signed, so Windows SmartScreen shows "Windows protected your PC" the first time. Click **More info → Run anyway**.
+
+**macOS 12 or later on Apple Silicon (M1 and newer):** download `CyclingTrainer-<version>-macOS-AppleSilicon.dmg`, open it and drag **Cycling Trainer** into **Applications**. The app isn't signed by Apple, so macOS blocks it the first time:
+
+1. Open **Cycling Trainer** from Applications and click **Done** when macOS says it can't be verified.
+2. Go to **System Settings → Privacy & Security**, scroll down and click **Open Anyway** next to the message about Cycling Trainer.
+3. Open the app again and allow Bluetooth access when asked.
+
+Intel Macs aren't supported yet.
 
 ## Setup from source
 
