@@ -33,12 +33,14 @@ python -m venv .venv
 2. Click **Connect HR** to pair a heart rate strap (optional).
 3. Set your **FTP**, choose a workout and start pedaling. The ride starts automatically.
 
+The app remembers your devices. On the next start it searches for them and connects as soon as they wake up; the button shows **Searching…** until then. If a connection drops during a ride, it reconnects automatically. To stop searching, click the button and choose **Disconnect**.
+
 | Key | Action |
 |---|---|
 | Space | Start / pause / resume |
 | Up / Down | Change workout intensity ±1% (ERG), or change the slope ±0.5% (free ride / ERG off) |
 
-When you click **Finish**, the ride is saved to `Documents\CyclingTrainer\rides` as a `.fit` file (upload it to Strava, Garmin Connect or intervals.icu) and a `.csv` file.
+When you click **Finish**, the ride is saved to `Documents\CyclingTrainer\rides` as a `.fit` file (upload it to Strava, Garmin Connect or intervals.icu) and a `.csv` file. The `.fit` file identifies itself as a Garmin Edge 530, because Garmin Connect counts only Garmin-recorded activities towards Training Effect, Acute Load and Training Status.
 
 ## FTP test
 
