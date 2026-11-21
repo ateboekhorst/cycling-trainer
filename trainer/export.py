@@ -7,17 +7,24 @@ from pathlib import Path
 
 from fit_tool.fit_file_builder import FitFileBuilder
 from fit_tool.profile.messages.activity_message import ActivityMessage
+from fit_tool.profile.messages.device_info_message import DeviceInfoMessage
 from fit_tool.profile.messages.event_message import EventMessage
 from fit_tool.profile.messages.file_id_message import FileIdMessage
 from fit_tool.profile.messages.lap_message import LapMessage
 from fit_tool.profile.messages.record_message import RecordMessage
 from fit_tool.profile.messages.session_message import SessionMessage
-from fit_tool.profile.profile_type import Activity, Event, EventType, FileType, Manufacturer, Sport, SubSport
+from fit_tool.profile.profile_type import Activity, Event, EventType, FileType, GarminProduct, Manufacturer, Sport, SubSport
 
 from .history import record_for, write_record
 from .session import Ride
 
 FIT_EPOCH_OFFSET = 631065600  # seconds between 1970-01-01 and 1989-12-31 (FIT epoch)
+
+# Garmin Connect computes Training Effect and training load (Acute Load, Training Status)
+# only for activities recorded by a Garmin device, so the file reports itself as an Edge 530.
+FIT_MANUFACTURER = Manufacturer.GARMIN.value
+FIT_PRODUCT = GarminProduct.EDGE_530.value
+FIT_SERIAL_NUMBER = 0x1C7C1E
 
 
 def ride_basename(ride: Ride) -> str:
@@ -90,11 +97,19 @@ def write_fit(ride: Ride, path: Path) -> None:
 
     file_id = FileIdMessage()
     file_id.type = FileType.ACTIVITY
-    file_id.manufacturer = Manufacturer.DEVELOPMENT.value
-    file_id.product = 0
-    file_id.serial_number = 0x1C7C1E
+    file_id.manufacturer = FIT_MANUFACTURER
+    file_id.product = FIT_PRODUCT
+    file_id.serial_number = FIT_SERIAL_NUMBER
     file_id.time_created = start_ms
     builder.add(file_id)
+
+    device = DeviceInfoMessage()
+    device.timestamp = start_ms
+    device.device_index = 0  # the creator of the file
+    device.manufacturer = FIT_MANUFACTURER
+    device.product = FIT_PRODUCT
+    device.serial_number = FIT_SERIAL_NUMBER
+    builder.add(device)
 
     def timer_event(ms: int, event_type: EventType) -> EventMessage:
         event = EventMessage()

@@ -4,8 +4,11 @@ from pathlib import Path
 
 import pytest
 from fit_tool.fit_file import FitFile
+from fit_tool.profile.messages.device_info_message import DeviceInfoMessage
+from fit_tool.profile.messages.file_id_message import FileIdMessage
 from fit_tool.profile.messages.record_message import RecordMessage
 from fit_tool.profile.messages.session_message import SessionMessage
+from fit_tool.profile.profile_type import GarminProduct, Manufacturer
 
 from trainer.devices.ftms import parse_indoor_bike_data
 from trainer.devices.hrm import parse_heart_rate
@@ -198,6 +201,11 @@ def test_save_ride_writes_valid_fit(tmp_path: Path):
     assert records[10].power == 210 and records[10].heart_rate == 140
     assert sessions[0].avg_power == round(ride.metrics.avg_power)
     assert sessions[0].total_distance == pytest.approx(ride.distance_m, rel=1e-3)
+    # Garmin Connect only counts Garmin-made files towards training load.
+    file_id = next(m for m in messages if isinstance(m, FileIdMessage))
+    creator = next(m for m in messages if isinstance(m, DeviceInfoMessage))
+    assert (file_id.manufacturer, file_id.product) == (Manufacturer.GARMIN.value, GarminProduct.EDGE_530.value)
+    assert (creator.device_index, creator.manufacturer, creator.product) == (0, file_id.manufacturer, file_id.product)
 
 
 # --- ramp test ---
