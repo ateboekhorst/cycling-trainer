@@ -28,7 +28,7 @@ class BleDevice:
         self._client = client
         try:
             await self._setup(client)
-        except Exception:
+        except BaseException:  # also when a search is cancelled halfway
             await self.disconnect()
             raise
         log.info("Connected to %s", self.address)

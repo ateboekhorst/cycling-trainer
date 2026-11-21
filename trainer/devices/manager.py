@@ -7,6 +7,7 @@ are emitted from the BLE thread and Qt queues them onto the UI thread.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import logging
 import threading
 from concurrent.futures import Future
@@ -35,12 +36,17 @@ class ScanResult:
 
 
 class _Slot:
-    """One device connection (trainer or HR strap) that reconnects automatically when lost."""
+    """One device connection (trainer, HR strap or power meter).
+
+    Keeps searching for the device until it connects, also when it is not around yet
+    (trainer asleep, strap not worn), and reconnects automatically when it is lost.
+    """
 
     def __init__(self, loop: asyncio.AbstractEventLoop, factory: Callable, state: Signal):
         self._loop = loop
         self._factory = factory  # (address, on_disconnect) -> device
         self._state = state
+        self._task: asyncio.Task | None = None
         self.device = None
         self.wanted: str | None = None
         self.on_connected: Callable[[], object] | None = None
@@ -49,19 +55,29 @@ class _Slot:
         await self.disconnect()
         self.wanted = address
         self._state.emit("connecting")
-        try:
-            await self._open(address)
-        except Exception:
-            self.wanted = None
-            self._state.emit("disconnected")
-            raise
+        self._task = self._loop.create_task(self._keep_connecting(address, 0))
 
     async def disconnect(self) -> None:
         self.wanted = None
+        task, self._task = self._task, None
+        if task is not None and not task.done():
+            task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await task
         device, self.device = self.device, None
         if device is not None:
             await device.disconnect()
         self._state.emit("disconnected")
+
+    async def _keep_connecting(self, address: str, delay: float) -> None:
+        while self.wanted == address and self.device is None:
+            await asyncio.sleep(delay)
+            delay = RECONNECT_DELAY
+            try:
+                await self._open(address)
+            except Exception as exc:
+                log.info("Could not connect to %s, still searching: %s", address, exc)
+                self._state.emit("searching")
 
     async def _open(self, address: str) -> None:
         device = self._factory(address, self._lost)
@@ -76,25 +92,17 @@ class _Slot:
 
     def _start_reconnect(self) -> None:
         self.device = None
-        if self.wanted is not None:
-            self._state.emit("reconnecting")
-            self._loop.create_task(self._reconnect(self.wanted))
-
-    async def _reconnect(self, address: str) -> None:
-        while self.wanted == address and self.device is None:
-            await asyncio.sleep(RECONNECT_DELAY)
-            if self.wanted != address:
-                return
-            try:
-                await self._open(address)
-            except Exception as exc:
-                log.info("Reconnect to %s failed: %s", address, exc)
+        if self.wanted is None:
+            return
+        self._state.emit("reconnecting")
+        if self._task is None or self._task.done():  # a running search picks the loss up itself
+            self._task = self._loop.create_task(self._keep_connecting(self.wanted, RECONNECT_DELAY))
 
 
 class DeviceManager(QObject):
     trainer_data = Signal(object)  # BikeData
     heart_rate = Signal(int)
-    trainer_state = Signal(str)  # disconnected | connecting | connected | reconnecting
+    trainer_state = Signal(str)  # disconnected | connecting | searching | connected | reconnecting
     hr_state = Signal(str)
     power_meter_data = Signal(object)  # PowerMeterReading
     power_meter_state = Signal(str)

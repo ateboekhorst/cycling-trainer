@@ -475,10 +475,17 @@ class MainWindow(QMainWindow):
         text, color = {
             "connected": (f"● {name}", theme.GOOD),
             "connecting": (f"Connecting {name}…", theme.WARN),
+            "searching": (f"Searching {name}…", theme.WARN),
             "reconnecting": (f"Reconnecting {name}…", theme.WARN),
         }.get(state, (idle_text, ""))
         button.setText(text)
         button.setStyleSheet(f"color: {color};" if color else "")
+        if button.property("idleToolTip") is None:
+            button.setProperty("idleToolTip", button.toolTip())
+        button.setToolTip(
+            "Not found yet. It keeps searching: wake the device (pedal, or wear the strap). Click to choose another."
+            if state == "searching" else button.property("idleToolTip")
+        )
 
     # --- display ---
 
